@@ -107,34 +107,42 @@ chord l =
 chordMap : Dict (List Int) String
 chordMap =
     Dict.fromList
-        [ ( [ toCode 'A', toCode 'S' ], "z" )
-        , ( [ toCode 'A', toCode 'D' ], "" )
+        [ ( [ toCode 'D', toCode 'S' ], "o" )
+        , ( [ toCode 'D', toCode 'F' ], "a" )
+        , ( [ toCode 'F', toCode 'S' ], "s" )
+
+        --
+        , ( [ toCode 'J', toCode 'S' ], "h" )
+        , ( [ toCode 'K', toCode 'S' ], "f" )
+        , ( [ toCode 'L', toCode 'S' ], "d" )
+        , ( [ toCode 'D', toCode 'J' ], "t" )
+        , ( [ toCode 'D', toCode 'K' ], "i" )
+        , ( [ toCode 'D', toCode 'L' ], "n" )
+        , ( [ toCode 'F', toCode 'J' ], "e" )
+        , ( [ toCode 'F', toCode 'K' ], "l" )
+        , ( [ toCode 'F', toCode 'L' ], "y" )
+
+        --
+        , ( [ toCode 'J', toCode 'K' ], "r" )
+        , ( [ toCode 'J', toCode 'L' ], "c" )
+        , ( [ toCode 'K', toCode 'L' ], "u" )
+
+        --
+        , ( [ toCode 'A', toCode 'S' ], "z" )
         , ( [ toCode 'A', toCode 'F' ], "m" )
         , ( [ toCode 'A', toCode 'J' ], "b" )
         , ( [ toCode 'A', toCode 'K' ], "p" )
         , ( [ toCode 'A', toCode 'L' ], "x" )
-        , ( [ toCode 'A', toCode 'º' ], "w" )
-        , ( [ toCode 'D', toCode 'S' ], "o" )
-        , ( [ toCode 'D', toCode 'F' ], "a" )
-        , ( [ toCode 'D', toCode 'J' ], "y" )
-        , ( [ toCode 'D', toCode 'K' ], "s" )
-        , ( [ toCode 'D', toCode 'L' ], "l" )
-        , ( [ toCode 'D', toCode 'º' ], "j" )
-        , ( [ toCode 'F', toCode 'S' ], "i" )
-        , ( [ toCode 'F', toCode 'J' ], "e" )
-        , ( [ toCode 'F', toCode 'K' ], "h" )
-        , ( [ toCode 'F', toCode 'L' ], "t" )
-        , ( [ toCode 'F', toCode 'º' ], "v" )
-        , ( [ toCode 'J', toCode 'S' ], "r" )
-        , ( [ toCode 'J', toCode 'K' ], "d" )
-        , ( [ toCode 'J', toCode 'L' ], "c" )
-        , ( [ toCode 'J', toCode 'º' ], "k" )
-        , ( [ toCode 'K', toCode 'S' ], "f" )
-        , ( [ toCode 'K', toCode 'L' ], "u" )
-        , ( [ toCode 'K', toCode 'º' ], "" )
-        , ( [ toCode 'L', toCode 'S' ], "n" )
         , ( [ toCode 'L', toCode 'º' ], "q" )
-        , ( [ toCode 'S', toCode 'º' ], "g" )
+        , ( [ toCode 'F', toCode 'º' ], "v" )
+        , ( [ toCode 'J', toCode 'º' ], "k" )
+        , ( [ toCode 'D', toCode 'º' ], "g" )
+        , ( [ toCode 'A', toCode 'º' ], "w" )
+        , ( [ toCode 'S', toCode 'º' ], "j" )
+
+        --
+        , ( [ toCode 'K', toCode 'º' ], "" )
+        , ( [ toCode 'A', toCode 'D' ], "" )
         , ( [ toCode ' ' ], " " )
         ]
 
@@ -219,6 +227,7 @@ onKeyUp tagger =
 view : Model -> Html Msg
 view model =
     Html.div []
-        [ Html.input [ type_ "text", spellcheck False, width 500, placeholder "Type something", value model.show, onKeyDown KeyDown, onKeyUp KeyUp, onInput (\x -> NoOp), onFocus Clear ] []
+        [ Html.div [] [ Html.text model.show ]
+        , Html.input [ type_ "text", spellcheck False, width 500, placeholder "Type something", value model.show, onKeyDown KeyDown, onKeyUp KeyUp, onInput (\x -> NoOp), onFocus Clear ] []
         , Html.div [] [ Html.text <| String.fromList <| List.map fromCode <| Set.toList model.chord ]
         ]

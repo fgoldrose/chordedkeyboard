@@ -7,6 +7,7 @@ import Dict exposing (Dict)
 import Html exposing (Html)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Http
 import Json.Decode as Decode
 import Set
 
@@ -28,6 +29,7 @@ main =
 type alias Model =
     { show : String
     , chord : Chord
+    , chordmap : ChordMap
     }
 
 
@@ -37,13 +39,14 @@ type alias Flags =
 
 init : Flags -> ( Model, Cmd Msg )
 init () =
-    ( initModel, Cmd.none )
+    ( initModel, getChordFile "./defaultmap.json" )
 
 
 initModel : Model
 initModel =
     { show = ""
     , chord = []
+    , chordmap = Dict.empty
     }
 
 
@@ -64,52 +67,41 @@ type alias Chord =
     List Int
 
 
-chordMap : Dict (List Int) String
-chordMap =
-    Dict.fromList
-        [ ( [ toCode 'D', toCode 'S' ], "o" )
-        , ( [ toCode 'D', toCode 'F' ], "a" )
-        , ( [ toCode 'F', toCode 'S' ], "s" )
-
-        --
-        , ( [ toCode 'J', toCode 'S' ], "h" )
-        , ( [ toCode 'K', toCode 'S' ], "f" )
-        , ( [ toCode 'L', toCode 'S' ], "d" )
-        , ( [ toCode 'D', toCode 'J' ], "t" )
-        , ( [ toCode 'D', toCode 'K' ], "i" )
-        , ( [ toCode 'D', toCode 'L' ], "n" )
-        , ( [ toCode 'F', toCode 'J' ], "e" )
-        , ( [ toCode 'F', toCode 'K' ], "l" )
-        , ( [ toCode 'F', toCode 'L' ], "y" )
-
-        --
-        , ( [ toCode 'J', toCode 'K' ], "r" )
-        , ( [ toCode 'J', toCode 'L' ], "c" )
-        , ( [ toCode 'K', toCode 'L' ], "u" )
-
-        --
-        , ( [ toCode 'A', toCode 'S' ], "z" )
-        , ( [ toCode 'A', toCode 'F' ], "m" )
-        , ( [ toCode 'A', toCode 'J' ], "b" )
-        , ( [ toCode 'A', toCode 'K' ], "p" )
-        , ( [ toCode 'A', toCode 'L' ], "x" )
-        , ( [ toCode 'L', toCode 'º' ], "q" )
-        , ( [ toCode 'F', toCode 'º' ], "v" )
-        , ( [ toCode 'J', toCode 'º' ], "k" )
-        , ( [ toCode 'D', toCode 'º' ], "g" )
-        , ( [ toCode 'A', toCode 'º' ], "w" )
-        , ( [ toCode 'S', toCode 'º' ], "j" )
-
-        --
-        , ( [ toCode 'K', toCode 'º' ], "" )
-        , ( [ toCode 'A', toCode 'D' ], "" )
-        , ( [ toCode ' ' ], " " )
-        ]
+type alias ChordMap =
+    Dict Chord String
 
 
-chordToString : Chord -> String
-chordToString c =
-    case Dict.get (List.sort c) chordMap of
+fixTuple : ( String, List String ) -> ( List Int, String )
+fixTuple t =
+    ( Tuple.second t |> List.sort << List.map (Char.toCode << Tuple.first << Maybe.withDefault ( '\u{0000}', "" ) << String.uncons), Tuple.first t )
+
+
+readChordMap : Decode.Decoder ChordMap
+readChordMap =
+    Decode.map
+        (\l -> Dict.fromList <| List.map fixTuple l)
+        (Decode.keyValuePairs <| Decode.list Decode.string)
+
+
+getChordFile : String -> Cmd Msg
+getChordFile filename =
+    Http.get
+        { url = filename
+        , expect = Http.expectJson LoadChordMap readChordMap
+        }
+
+
+
+--
+
+
+chordToString : Chord -> ChordMap -> String
+chordToString c cm =
+    let
+        _ =
+            Debug.log "chord" ( c, List.map Char.fromCode c )
+    in
+    case Dict.get (List.sort c) cm of
         Nothing ->
             ""
 
@@ -134,7 +126,7 @@ downmodel i model =
                     [ i ]
 
         string =
-            chordToString addi
+            chordToString addi model.chordmap
     in
     { model | show = model.show ++ string, chord = addi }
 
@@ -150,10 +142,10 @@ upmodel i model =
 
         string =
             if List.member i firsttwo then
-                chordToString remi
+                chordToString remi model.chordmap
 
             else
-                chordToString firsttwo
+                chordToString firsttwo model.chordmap
     in
     { model | show = model.show ++ string, chord = remi }
 
@@ -163,7 +155,8 @@ upmodel i model =
 
 
 type Msg
-    = KeyDown Int
+    = LoadChordMap (Result Http.Error ChordMap)
+    | KeyDown Int
     | KeyUp Int
     | Clear
     | NoOp
@@ -172,6 +165,18 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        LoadChordMap res ->
+            case res of
+                Ok cm ->
+                    ( { model | chordmap = cm }, Cmd.none )
+
+                Err e ->
+                    let
+                        _ =
+                            Debug.log "err" e
+                    in
+                    ( model, Cmd.none )
+
         KeyDown i ->
             ( downmodel i model, Cmd.none )
 
@@ -186,7 +191,7 @@ update msg model =
 
 
 
--- View --
+--
 
 
 nonRepeatKey : Decode.Decoder Int
@@ -217,10 +222,26 @@ onKeyUp tagger =
     on "keyup" (Decode.map tagger keyCode)
 
 
+
+-- View --
+
+
 view : Model -> Html Msg
 view model =
     Html.div []
-        [ Html.div [] [ Html.text model.show ]
-        , Html.input [ type_ "text", spellcheck False, width 500, placeholder "Type something", value model.show, onKeyDown KeyDown, onKeyUp KeyUp, onInput (\x -> NoOp), onFocus Clear ] []
-        , Html.div [] [ Html.text <| String.fromList <| List.map fromCode model.chord ]
+        [ Html.div [ style "height" "200px", style "font-size" "30px" ]
+            [ Html.text model.show ]
+        , Html.input
+            [ type_ "text"
+            , spellcheck False
+            , autofocus True
+            , value ""
+            , onKeyDown KeyDown
+            , onKeyUp KeyUp
+            , onInput (\x -> NoOp)
+            , onFocus Clear
+            ]
+            []
+        , Html.div []
+            [ Html.text <| String.fromList <| List.map fromCode model.chord ]
         ]

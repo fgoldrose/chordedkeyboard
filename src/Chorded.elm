@@ -43,7 +43,7 @@ init () =
 initModel : Model
 initModel =
     { show = ""
-    , chord = Set.empty
+    , chord = []
     }
 
 
@@ -61,47 +61,7 @@ subscriptions model =
 
 
 type alias Chord =
-    Set.Set Int
-
-
-chord : List Int -> Chord
-chord l =
-    Set.fromList l
-
-
-
---chordMap : Dict (List Int) String
---chordMap =
---    Dict.fromList
---        [ ( [ toCode 'A', toCode 'S' ], "12 " )
---        , ( [ toCode 'A', toCode 'D' ], "13 " )
---        , ( [ toCode 'A', toCode 'F' ], "14 " )
---        , ( [ toCode 'A', toCode 'J' ], "15 " )
---        , ( [ toCode 'A', toCode 'K' ], "16 " )
---        , ( [ toCode 'A', toCode 'L' ], "17 " )
---        , ( [ toCode 'A', toCode 'º' ], "18 " )
---        , ( [ toCode 'D', toCode 'S' ], "32 " )
---        , ( [ toCode 'D', toCode 'F' ], "34 " )
---        , ( [ toCode 'D', toCode 'J' ], "35 " )
---        , ( [ toCode 'D', toCode 'K' ], "36 " )
---        , ( [ toCode 'D', toCode 'L' ], "37 " )
---        , ( [ toCode 'D', toCode 'º' ], "38 " )
---        , ( [ toCode 'F', toCode 'S' ], "42 " )
---        , ( [ toCode 'F', toCode 'J' ], "45 " )
---        , ( [ toCode 'F', toCode 'K' ], "46 " )
---        , ( [ toCode 'F', toCode 'L' ], "47 " )
---        , ( [ toCode 'F', toCode 'º' ], "48 " )
---        , ( [ toCode 'J', toCode 'S' ], "52 " )
---        , ( [ toCode 'J', toCode 'K' ], "56 " )
---        , ( [ toCode 'J', toCode 'L' ], "57 " )
---        , ( [ toCode 'J', toCode 'º' ], "58 " )
---        , ( [ toCode 'K', toCode 'S' ], "62 " )
---        , ( [ toCode 'K', toCode 'L' ], "67 " )
---        , ( [ toCode 'K', toCode 'º' ], "68 " )
---        , ( [ toCode 'L', toCode 'S' ], "72 " )
---        , ( [ toCode 'L', toCode 'º' ], "78 " )
---        , ( [ toCode 'S', toCode 'º' ], "28 " )
---        ]
+    List Int
 
 
 chordMap : Dict (List Int) String
@@ -149,12 +109,53 @@ chordMap =
 
 chordToString : Chord -> String
 chordToString c =
-    case Dict.get (Set.toList c) chordMap of
+    case Dict.get (List.sort c) chordMap of
         Nothing ->
             ""
 
         Just s ->
             s
+
+
+remove : Int -> Chord -> Chord
+remove i c =
+    List.filter (\x -> x /= i) c
+
+
+downmodel : Int -> Model -> Model
+downmodel i model =
+    let
+        addi =
+            case remove i model.chord of
+                x :: xs ->
+                    x :: i :: xs
+
+                [] ->
+                    [ i ]
+
+        string =
+            chordToString addi
+    in
+    { model | show = model.show ++ string, chord = addi }
+
+
+upmodel : Int -> Model -> Model
+upmodel i model =
+    let
+        remi =
+            remove i model.chord
+
+        firsttwo =
+            List.take 2 model.chord
+
+        string =
+            if List.member i firsttwo then
+                chordToString remi
+
+            else
+                chordToString firsttwo
+    in
+    { model | show = model.show ++ string, chord = remi }
 
 
 
@@ -172,21 +173,13 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         KeyDown i ->
-            let
-                newchord =
-                    Set.insert i model.chord
-            in
-            ( { model | show = model.show ++ chordToString newchord, chord = newchord }, Cmd.none )
+            ( downmodel i model, Cmd.none )
 
         KeyUp i ->
-            let
-                newchord =
-                    Set.remove i model.chord
-            in
-            ( { model | show = model.show ++ chordToString newchord, chord = newchord }, Cmd.none )
+            ( upmodel i model, Cmd.none )
 
         Clear ->
-            ( { model | chord = Set.empty }, Cmd.none )
+            ( { model | chord = [] }, Cmd.none )
 
         NoOp ->
             ( model, Cmd.none )
@@ -229,5 +222,5 @@ view model =
     Html.div []
         [ Html.div [] [ Html.text model.show ]
         , Html.input [ type_ "text", spellcheck False, width 500, placeholder "Type something", value model.show, onKeyDown KeyDown, onKeyUp KeyUp, onInput (\x -> NoOp), onFocus Clear ] []
-        , Html.div [] [ Html.text <| String.fromList <| List.map fromCode <| Set.toList model.chord ]
+        , Html.div [] [ Html.text <| String.fromList <| List.map fromCode model.chord ]
         ]

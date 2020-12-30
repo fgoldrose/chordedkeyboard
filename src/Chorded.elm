@@ -102,7 +102,6 @@ chord l =
 --        , ( [ toCode 'L', toCode 'º' ], "78 " )
 --        , ( [ toCode 'S', toCode 'º' ], "28 " )
 --        ]
--- here
 
 
 chordMap : Dict (List Int) String
@@ -116,26 +115,26 @@ chordMap =
         , ( [ toCode 'A', toCode 'L' ], "x" )
         , ( [ toCode 'A', toCode 'º' ], "w" )
         , ( [ toCode 'D', toCode 'S' ], "o" )
-        , ( [ toCode 'D', toCode 'F' ], "t" )
-        , ( [ toCode 'D', toCode 'J' ], "i" )
-        , ( [ toCode 'D', toCode 'K' ], "n" )
-        , ( [ toCode 'D', toCode 'L' ], "g" )
-        , ( [ toCode 'D', toCode 'º' ], "f" )
-        , ( [ toCode 'F', toCode 'S' ], "a" )
+        , ( [ toCode 'D', toCode 'F' ], "a" )
+        , ( [ toCode 'D', toCode 'J' ], "y" )
+        , ( [ toCode 'D', toCode 'K' ], "s" )
+        , ( [ toCode 'D', toCode 'L' ], "l" )
+        , ( [ toCode 'D', toCode 'º' ], "j" )
+        , ( [ toCode 'F', toCode 'S' ], "i" )
         , ( [ toCode 'F', toCode 'J' ], "e" )
         , ( [ toCode 'F', toCode 'K' ], "h" )
-        , ( [ toCode 'F', toCode 'L' ], "r" )
+        , ( [ toCode 'F', toCode 'L' ], "t" )
         , ( [ toCode 'F', toCode 'º' ], "v" )
-        , ( [ toCode 'J', toCode 'S' ], "y" )
+        , ( [ toCode 'J', toCode 'S' ], "r" )
         , ( [ toCode 'J', toCode 'K' ], "d" )
         , ( [ toCode 'J', toCode 'L' ], "c" )
         , ( [ toCode 'J', toCode 'º' ], "k" )
-        , ( [ toCode 'K', toCode 'S' ], "l" )
+        , ( [ toCode 'K', toCode 'S' ], "f" )
         , ( [ toCode 'K', toCode 'L' ], "u" )
         , ( [ toCode 'K', toCode 'º' ], "" )
-        , ( [ toCode 'L', toCode 'S' ], "s" )
+        , ( [ toCode 'L', toCode 'S' ], "n" )
         , ( [ toCode 'L', toCode 'º' ], "q" )
-        , ( [ toCode 'S', toCode 'º' ], "j" )
+        , ( [ toCode 'S', toCode 'º' ], "g" )
         , ( [ toCode ' ' ], " " )
         ]
 

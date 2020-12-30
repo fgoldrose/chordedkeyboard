@@ -2,7 +2,7 @@ module Chorded exposing (..)
 
 import Browser
 import Browser.Events exposing (..)
-import Char exposing (fromCode)
+import Char exposing (fromCode, toCode)
 import Dict exposing (Dict)
 import Html exposing (Html)
 import Html.Attributes exposing (..)
@@ -27,7 +27,7 @@ main =
 
 type alias Model =
     { show : String
-    , chord : Set.Set String
+    , chord : Chord
     }
 
 
@@ -53,17 +53,7 @@ initModel =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.batch [ onKeyDown downDecoder, onKeyUp upDecoder ]
-
-
-downDecoder : Decode.Decoder Msg
-downDecoder =
-    Decode.map (\s -> KeyDown s) (Decode.field "key" Decode.string)
-
-
-upDecoder : Decode.Decoder Msg
-upDecoder =
-    Decode.map (\s -> KeyUp s) (Decode.field "key" Decode.string)
+    Sub.none
 
 
 
@@ -71,33 +61,50 @@ upDecoder =
 
 
 type alias Chord =
-    Set.Set String
+    Set.Set Int
 
 
-chord : List String -> Chord
+chord : List Int -> Chord
 chord l =
     Set.fromList l
 
 
-chordMap : Dict (List String) String
+chordMap : Dict (List Int) String
 chordMap =
     Dict.fromList
-        [ ( [ "a", "s" ], "1" )
-        , ( [ "a", "d" ], "2" )
-        , ( [ "a", "f" ], "" )
-        , ( [ "", "" ], "" )
-        , ( [ "", "" ], "" )
-        , ( [ "", "" ], "" )
-        , ( [ "", "" ], "" )
-        , ( [ "", "" ], "" )
-        , ( [ "", "" ], "" )
-        , ( [ "", "" ], "" )
-        , ( [ "", "" ], "" )
+        [ ( [ toCode 'A', toCode 'S' ], "12 " )
+        , ( [ toCode 'A', toCode 'D' ], "13 " )
+        , ( [ toCode 'A', toCode 'F' ], "14 " )
+        , ( [ toCode 'A', toCode 'J' ], "15 " )
+        , ( [ toCode 'A', toCode 'K' ], "16 " )
+        , ( [ toCode 'A', toCode 'L' ], "17 " )
+        , ( [ toCode 'A', toCode 'º' ], "18 " )
+        , ( [ toCode 'D', toCode 'S' ], "32 " )
+        , ( [ toCode 'D', toCode 'F' ], "34 " )
+        , ( [ toCode 'D', toCode 'J' ], "35 " )
+        , ( [ toCode 'D', toCode 'K' ], "36 " )
+        , ( [ toCode 'D', toCode 'L' ], "37 " )
+        , ( [ toCode 'D', toCode 'º' ], "38 " )
+        , ( [ toCode 'F', toCode 'S' ], "42 " )
+        , ( [ toCode 'F', toCode 'J' ], "45 " )
+        , ( [ toCode 'F', toCode 'K' ], "46 " )
+        , ( [ toCode 'F', toCode 'L' ], "47 " )
+        , ( [ toCode 'F', toCode 'º' ], "48 " )
+        , ( [ toCode 'J', toCode 'S' ], "52 " )
+        , ( [ toCode 'J', toCode 'K' ], "56 " )
+        , ( [ toCode 'J', toCode 'L' ], "57 " )
+        , ( [ toCode 'J', toCode 'º' ], "58 " )
+        , ( [ toCode 'K', toCode 'S' ], "62 " )
+        , ( [ toCode 'K', toCode 'L' ], "67 " )
+        , ( [ toCode 'K', toCode 'º' ], "68 " )
+        , ( [ toCode 'L', toCode 'S' ], "72 " )
+        , ( [ toCode 'L', toCode 'º' ], "78 " )
+        , ( [ toCode 'S', toCode 'º' ], "28 " )
         ]
 
 
-chordToChar : Chord -> String
-chordToChar c =
+chordToString : Chord -> String
+chordToString c =
     case Dict.get (Set.toList c) chordMap of
         Nothing ->
             ""
@@ -111,27 +118,71 @@ chordToChar c =
 
 
 type Msg
-    = KeyDown String
-    | KeyUp String
+    = KeyDown Int
+    | KeyUp Int
+    | Clear
+    | NoOp
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        KeyDown s ->
-            ( { model | chord = Set.insert s model.chord }, Cmd.none )
+        KeyDown i ->
+            let
+                newchord =
+                    Set.insert i model.chord
+            in
+            ( { model | show = model.show ++ chordToString newchord, chord = newchord }, Cmd.none )
 
-        KeyUp s ->
-            ( { model | show = model.show ++ chordToChar model.chord, chord = Set.remove s model.chord }, Cmd.none )
+        KeyUp i ->
+            let
+                newchord =
+                    Set.remove i model.chord
+            in
+            ( { model | show = model.show ++ chordToString newchord, chord = newchord }, Cmd.none )
+
+        Clear ->
+            ( { model | chord = Set.empty }, Cmd.none )
+
+        NoOp ->
+            ( model, Cmd.none )
 
 
 
 -- View --
 
 
+nonRepeatKey : Decode.Decoder Int
+nonRepeatKey =
+    let
+        repeated : Decode.Decoder Bool
+        repeated =
+            Decode.field "repeat" Decode.bool
+
+        maybeKeyCode : Bool -> Decode.Decoder Int
+        maybeKeyCode repeat =
+            if repeat then
+                Decode.fail "Repeated character"
+
+            else
+                keyCode
+    in
+    repeated |> Decode.andThen maybeKeyCode
+
+
+onKeyDown : (Int -> msg) -> Html.Attribute msg
+onKeyDown tagger =
+    on "keydown" <| Decode.map tagger nonRepeatKey
+
+
+onKeyUp : (Int -> msg) -> Html.Attribute msg
+onKeyUp tagger =
+    on "keyup" (Decode.map tagger keyCode)
+
+
 view : Model -> Html Msg
 view model =
     Html.div []
-        [ Html.text model.show
-        , Html.div [] [ Html.text (Set.foldl (++) "" model.chord) ]
+        [ Html.input [ type_ "text", placeholder "Type something", value model.show, onKeyDown KeyDown, onKeyUp KeyUp, onInput (\x -> NoOp), onFocus Clear ] []
+        , Html.div [] [ Html.text <| String.fromList <| List.map fromCode <| Set.toList model.chord ]
         ]

@@ -22,6 +22,19 @@ main =
         }
 
 
+type Key
+    = Character Char
+    | Control String
+
+
+type alias Chord =
+    List Key
+
+
+type alias ChordMap =
+    Dict (List String) String
+
+
 
 -- Model --
 
@@ -56,24 +69,54 @@ initModel =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.none
+    Sub.batch [ onKeyDown downDecoder, onKeyUp upDecoder ]
+
+
+toKey : String -> Key
+toKey string =
+    case String.uncons string of
+        Just ( char, "" ) ->
+            Character char
+
+        _ ->
+            Control string
+
+
+downDecoder : Decode.Decoder Msg
+downDecoder =
+    nonRepeat
+        (Decode.field "key" Decode.string
+            |> Decode.map toKey
+            |> Decode.map KeyDown
+        )
+
+
+upDecoder : Decode.Decoder Msg
+upDecoder =
+    Decode.field "key" Decode.string |> Decode.map toKey |> Decode.map KeyUp
+
+
+nonRepeat : Decode.Decoder Msg -> Decode.Decoder Msg
+nonRepeat d =
+    let
+        maybeKey : Bool -> Decode.Decoder Msg
+        maybeKey repeat =
+            if repeat then
+                Decode.fail "Repeated character"
+
+            else
+                d
+    in
+    Decode.field "repeat" Decode.bool |> Decode.andThen maybeKey
 
 
 
 -- Chords
 
 
-type alias Chord =
-    List Int
-
-
-type alias ChordMap =
-    Dict Chord String
-
-
-fixTuple : ( String, List String ) -> ( List Int, String )
+fixTuple : ( String, List String ) -> ( List String, String )
 fixTuple t =
-    ( Tuple.second t |> List.sort << List.map (Char.toCode << Tuple.first << Maybe.withDefault ( '\u{0000}', "" ) << String.uncons), Tuple.first t )
+    ( Tuple.second t |> List.sort, Tuple.first t )
 
 
 readChordMap : Decode.Decoder ChordMap
@@ -95,13 +138,19 @@ getChordFile filename =
 --
 
 
+keyToString : Key -> String
+keyToString k =
+    case k of
+        Character c ->
+            String.fromChar c
+
+        Control s ->
+            s
+
+
 chordToString : Chord -> ChordMap -> String
 chordToString c cm =
-    let
-        _ =
-            Debug.log "chord" ( c, List.map Char.fromCode c )
-    in
-    case Dict.get (List.sort c) cm of
+    case Dict.get (List.map keyToString c |> List.sort) cm of
         Nothing ->
             ""
 
@@ -109,12 +158,12 @@ chordToString c cm =
             s
 
 
-remove : Int -> Chord -> Chord
+remove : Key -> Chord -> Chord
 remove i c =
     List.filter (\x -> x /= i) c
 
 
-downmodel : Int -> Model -> Model
+downmodel : Key -> Model -> Model
 downmodel i model =
     let
         addi =
@@ -131,7 +180,7 @@ downmodel i model =
     { model | show = model.show ++ string, chord = addi }
 
 
-upmodel : Int -> Model -> Model
+upmodel : Key -> Model -> Model
 upmodel i model =
     let
         remi =
@@ -156,8 +205,8 @@ upmodel i model =
 
 type Msg
     = LoadChordMap (Result Http.Error ChordMap)
-    | KeyDown Int
-    | KeyUp Int
+    | KeyDown Key
+    | KeyUp Key
     | Clear
     | NoOp
 
@@ -171,10 +220,6 @@ update msg model =
                     ( { model | chordmap = cm }, Cmd.none )
 
                 Err e ->
-                    let
-                        _ =
-                            Debug.log "err" e
-                    in
                     ( model, Cmd.none )
 
         KeyDown i ->
@@ -191,38 +236,6 @@ update msg model =
 
 
 
---
-
-
-nonRepeatKey : Decode.Decoder Int
-nonRepeatKey =
-    let
-        repeated : Decode.Decoder Bool
-        repeated =
-            Decode.field "repeat" Decode.bool
-
-        maybeKeyCode : Bool -> Decode.Decoder Int
-        maybeKeyCode repeat =
-            if repeat then
-                Decode.fail "Repeated character"
-
-            else
-                keyCode
-    in
-    repeated |> Decode.andThen maybeKeyCode
-
-
-onKeyDown : (Int -> msg) -> Html.Attribute msg
-onKeyDown tagger =
-    on "keydown" <| Decode.map tagger nonRepeatKey
-
-
-onKeyUp : (Int -> msg) -> Html.Attribute msg
-onKeyUp tagger =
-    on "keyup" (Decode.map tagger keyCode)
-
-
-
 -- View --
 
 
@@ -231,17 +244,6 @@ view model =
     Html.div []
         [ Html.div [ style "height" "200px", style "font-size" "30px" ]
             [ Html.text model.show ]
-        , Html.input
-            [ type_ "text"
-            , spellcheck False
-            , autofocus True
-            , value ""
-            , onKeyDown KeyDown
-            , onKeyUp KeyUp
-            , onInput (\x -> NoOp)
-            , onFocus Clear
-            ]
-            []
         , Html.div []
-            [ Html.text <| String.fromList <| List.map fromCode model.chord ]
+            [ Html.text <| String.concat <| List.map keyToString model.chord ]
         ]

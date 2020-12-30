@@ -69,37 +69,74 @@ chord l =
     Set.fromList l
 
 
+
+--chordMap : Dict (List Int) String
+--chordMap =
+--    Dict.fromList
+--        [ ( [ toCode 'A', toCode 'S' ], "12 " )
+--        , ( [ toCode 'A', toCode 'D' ], "13 " )
+--        , ( [ toCode 'A', toCode 'F' ], "14 " )
+--        , ( [ toCode 'A', toCode 'J' ], "15 " )
+--        , ( [ toCode 'A', toCode 'K' ], "16 " )
+--        , ( [ toCode 'A', toCode 'L' ], "17 " )
+--        , ( [ toCode 'A', toCode 'º' ], "18 " )
+--        , ( [ toCode 'D', toCode 'S' ], "32 " )
+--        , ( [ toCode 'D', toCode 'F' ], "34 " )
+--        , ( [ toCode 'D', toCode 'J' ], "35 " )
+--        , ( [ toCode 'D', toCode 'K' ], "36 " )
+--        , ( [ toCode 'D', toCode 'L' ], "37 " )
+--        , ( [ toCode 'D', toCode 'º' ], "38 " )
+--        , ( [ toCode 'F', toCode 'S' ], "42 " )
+--        , ( [ toCode 'F', toCode 'J' ], "45 " )
+--        , ( [ toCode 'F', toCode 'K' ], "46 " )
+--        , ( [ toCode 'F', toCode 'L' ], "47 " )
+--        , ( [ toCode 'F', toCode 'º' ], "48 " )
+--        , ( [ toCode 'J', toCode 'S' ], "52 " )
+--        , ( [ toCode 'J', toCode 'K' ], "56 " )
+--        , ( [ toCode 'J', toCode 'L' ], "57 " )
+--        , ( [ toCode 'J', toCode 'º' ], "58 " )
+--        , ( [ toCode 'K', toCode 'S' ], "62 " )
+--        , ( [ toCode 'K', toCode 'L' ], "67 " )
+--        , ( [ toCode 'K', toCode 'º' ], "68 " )
+--        , ( [ toCode 'L', toCode 'S' ], "72 " )
+--        , ( [ toCode 'L', toCode 'º' ], "78 " )
+--        , ( [ toCode 'S', toCode 'º' ], "28 " )
+--        ]
+-- here
+
+
 chordMap : Dict (List Int) String
 chordMap =
     Dict.fromList
-        [ ( [ toCode 'A', toCode 'S' ], "12 " )
-        , ( [ toCode 'A', toCode 'D' ], "13 " )
-        , ( [ toCode 'A', toCode 'F' ], "14 " )
-        , ( [ toCode 'A', toCode 'J' ], "15 " )
-        , ( [ toCode 'A', toCode 'K' ], "16 " )
-        , ( [ toCode 'A', toCode 'L' ], "17 " )
-        , ( [ toCode 'A', toCode 'º' ], "18 " )
-        , ( [ toCode 'D', toCode 'S' ], "32 " )
-        , ( [ toCode 'D', toCode 'F' ], "34 " )
-        , ( [ toCode 'D', toCode 'J' ], "35 " )
-        , ( [ toCode 'D', toCode 'K' ], "36 " )
-        , ( [ toCode 'D', toCode 'L' ], "37 " )
-        , ( [ toCode 'D', toCode 'º' ], "38 " )
-        , ( [ toCode 'F', toCode 'S' ], "42 " )
-        , ( [ toCode 'F', toCode 'J' ], "45 " )
-        , ( [ toCode 'F', toCode 'K' ], "46 " )
-        , ( [ toCode 'F', toCode 'L' ], "47 " )
-        , ( [ toCode 'F', toCode 'º' ], "48 " )
-        , ( [ toCode 'J', toCode 'S' ], "52 " )
-        , ( [ toCode 'J', toCode 'K' ], "56 " )
-        , ( [ toCode 'J', toCode 'L' ], "57 " )
-        , ( [ toCode 'J', toCode 'º' ], "58 " )
-        , ( [ toCode 'K', toCode 'S' ], "62 " )
-        , ( [ toCode 'K', toCode 'L' ], "67 " )
-        , ( [ toCode 'K', toCode 'º' ], "68 " )
-        , ( [ toCode 'L', toCode 'S' ], "72 " )
-        , ( [ toCode 'L', toCode 'º' ], "78 " )
-        , ( [ toCode 'S', toCode 'º' ], "28 " )
+        [ ( [ toCode 'A', toCode 'S' ], "z" )
+        , ( [ toCode 'A', toCode 'D' ], "" )
+        , ( [ toCode 'A', toCode 'F' ], "m" )
+        , ( [ toCode 'A', toCode 'J' ], "b" )
+        , ( [ toCode 'A', toCode 'K' ], "p" )
+        , ( [ toCode 'A', toCode 'L' ], "x" )
+        , ( [ toCode 'A', toCode 'º' ], "w" )
+        , ( [ toCode 'D', toCode 'S' ], "o" )
+        , ( [ toCode 'D', toCode 'F' ], "t" )
+        , ( [ toCode 'D', toCode 'J' ], "i" )
+        , ( [ toCode 'D', toCode 'K' ], "n" )
+        , ( [ toCode 'D', toCode 'L' ], "g" )
+        , ( [ toCode 'D', toCode 'º' ], "f" )
+        , ( [ toCode 'F', toCode 'S' ], "a" )
+        , ( [ toCode 'F', toCode 'J' ], "e" )
+        , ( [ toCode 'F', toCode 'K' ], "h" )
+        , ( [ toCode 'F', toCode 'L' ], "r" )
+        , ( [ toCode 'F', toCode 'º' ], "v" )
+        , ( [ toCode 'J', toCode 'S' ], "y" )
+        , ( [ toCode 'J', toCode 'K' ], "d" )
+        , ( [ toCode 'J', toCode 'L' ], "c" )
+        , ( [ toCode 'J', toCode 'º' ], "k" )
+        , ( [ toCode 'K', toCode 'S' ], "l" )
+        , ( [ toCode 'K', toCode 'L' ], "u" )
+        , ( [ toCode 'K', toCode 'º' ], "" )
+        , ( [ toCode 'L', toCode 'S' ], "s" )
+        , ( [ toCode 'L', toCode 'º' ], "q" )
+        , ( [ toCode 'S', toCode 'º' ], "j" )
+        , ( [ toCode ' ' ], " " )
         ]
 
 
@@ -183,6 +220,6 @@ onKeyUp tagger =
 view : Model -> Html Msg
 view model =
     Html.div []
-        [ Html.input [ type_ "text", placeholder "Type something", value model.show, onKeyDown KeyDown, onKeyUp KeyUp, onInput (\x -> NoOp), onFocus Clear ] []
+        [ Html.input [ type_ "text", spellcheck False, width 500, placeholder "Type something", value model.show, onKeyDown KeyDown, onKeyUp KeyUp, onInput (\x -> NoOp), onFocus Clear ] []
         , Html.div [] [ Html.text <| String.fromList <| List.map fromCode <| Set.toList model.chord ]
         ]

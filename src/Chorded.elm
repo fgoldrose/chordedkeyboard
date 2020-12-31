@@ -6,7 +6,7 @@ import Char exposing (fromCode, toCode)
 import Dict exposing (Dict)
 import Html exposing (Html)
 import Html.Attributes exposing (..)
-import Html.Events exposing (..)
+import Html.Events
 import Http
 import Json.Decode as Decode
 import Set
@@ -134,7 +134,7 @@ getChordFile : String -> Cmd Msg
 getChordFile filename =
     Http.get
         { url = filename
-        , expect = Http.expectJson LoadChordMap readChordMap
+        , expect = Http.expectJson GotChordMap readChordMap
         }
 
 
@@ -199,9 +199,6 @@ addChordVal model updatetime =
         timediff =
             cur - prev
 
-        _ =
-            Debug.log "timediff" ( model.lastpress, timediff )
-
         ( addstring, changechord, changetime ) =
             case model.chord of
                 f :: s :: rest ->
@@ -234,24 +231,26 @@ addChordVal model updatetime =
 
 
 type Msg
-    = LoadChordMap (Result Http.Error ChordMap)
+    = GotChordMap (Result Http.Error ChordMap)
+    | LoadChordMap String
     | KeyDown Key
     | KeyUp Key
     | GotTime Time.Posix
-    | Clear
-    | NoOp
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        LoadChordMap res ->
+        GotChordMap res ->
             case res of
                 Ok cm ->
-                    ( { model | chordmap = cm }, Cmd.none )
+                    ( { model | chord = [], show = "", chordmap = cm }, Cmd.none )
 
                 Err e ->
                     ( model, Cmd.none )
+
+        LoadChordMap f ->
+            ( model, getChordFile f )
 
         KeyDown i ->
             ( { model | chord = addkey i model.chord }, Task.perform GotTime Time.now )
@@ -262,12 +261,6 @@ update msg model =
         GotTime time ->
             ( addChordVal model time, Cmd.none )
 
-        Clear ->
-            ( { model | chord = [] }, Cmd.none )
-
-        NoOp ->
-            ( model, Cmd.none )
-
 
 
 -- View --
@@ -276,7 +269,15 @@ update msg model =
 view : Model -> Html Msg
 view model =
     Html.div []
-        [ Html.div [ style "height" "200px", style "font-size" "30px" ]
+        [ Html.div []
+            [ Html.button
+                [ Html.Events.onClick <| LoadChordMap "defaultmap.json" ]
+                [ Html.text "Default" ]
+            , Html.button
+                [ Html.Events.onClick <| LoadChordMap "onehand.json" ]
+                [ Html.text "One hand" ]
+            ]
+        , Html.div [ style "height" "200px", style "font-size" "30px" ]
             [ Html.text model.show ]
         , Html.div []
             [ Html.text <| String.concat <| List.map keyToString model.chord ]

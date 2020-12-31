@@ -274,7 +274,7 @@ view model =
                 [ Html.Events.onClick <| LoadChordMap "defaultmap.json" ]
                 [ Html.text "Default" ]
             , Html.button
-                [ Html.Events.onClick <| LoadChordMap "onehand.json" ]
+                [ Html.Events.onClick <| LoadChordMap "onehandright.json" ]
                 [ Html.text "One hand" ]
             ]
         , Html.div [ style "height" "200px", style "font-size" "30px" ]

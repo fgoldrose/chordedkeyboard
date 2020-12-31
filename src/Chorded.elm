@@ -45,7 +45,7 @@ type alias Model =
     { show : String
     , chord : Chord
     , chordmap : ChordMap
-    , lastpress : Maybe Time.Posix
+    , lastpress : Int
     }
 
 
@@ -63,7 +63,7 @@ initModel =
     { show = ""
     , chord = []
     , chordmap = Dict.empty
-    , lastpress = Nothing
+    , lastpress = 0
     }
 
 
@@ -179,7 +179,7 @@ addkey k c =
 
 longTimeDiff : Int
 longTimeDiff =
-    50
+    80
 
 
 addChordVal : Model -> Time.Posix -> Model
@@ -189,12 +189,7 @@ addChordVal model updatetime =
             Time.posixToMillis updatetime
 
         prev =
-            case model.lastpress of
-                Nothing ->
-                    0
-
-                Just x ->
-                    Time.posixToMillis x
+            model.lastpress
 
         timediff =
             cur - prev
@@ -218,7 +213,7 @@ addChordVal model updatetime =
         | show = model.show ++ addstring
         , lastpress =
             if changetime then
-                Just updatetime
+                cur
 
             else
                 model.lastpress

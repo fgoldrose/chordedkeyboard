@@ -10,6 +10,8 @@ import Html.Events exposing (..)
 import Http
 import Json.Decode as Decode
 import Set
+import Task
+import Time
 
 
 main : Program Flags Model Msg
@@ -43,6 +45,7 @@ type alias Model =
     { show : String
     , chord : Chord
     , chordmap : ChordMap
+    , lastpress : Maybe Time.Posix
     }
 
 
@@ -60,6 +63,7 @@ initModel =
     { show = ""
     , chord = []
     , chordmap = Dict.empty
+    , lastpress = Nothing
     }
 
 
@@ -158,45 +162,71 @@ chordToString c cm =
             s
 
 
-remove : Key -> Chord -> Chord
-remove i c =
+removekey : Key -> Chord -> Chord
+removekey i c =
     List.filter (\x -> x /= i) c
 
 
-downmodel : Key -> Model -> Model
-downmodel i model =
+addkey : Key -> Chord -> Chord
+addkey k c =
+    case removekey k c of
+        x :: xs ->
+            x :: k :: xs
+
+        [] ->
+            [ k ]
+
+
+longTimeDiff : Int
+longTimeDiff =
+    50
+
+
+addChordVal : Model -> Time.Posix -> Model
+addChordVal model updatetime =
     let
-        addi =
-            case remove i model.chord of
-                x :: xs ->
-                    x :: i :: xs
+        cur =
+            Time.posixToMillis updatetime
 
-                [] ->
-                    [ i ]
+        prev =
+            case model.lastpress of
+                Nothing ->
+                    0
 
-        string =
-            chordToString addi model.chordmap
+                Just x ->
+                    Time.posixToMillis x
+
+        timediff =
+            cur - prev
+
+        _ =
+            Debug.log "timediff" ( model.lastpress, timediff )
+
+        ( addstring, changechord, changetime ) =
+            case model.chord of
+                f :: s :: rest ->
+                    ( chordToString [ f, s ] model.chordmap
+                    , if timediff < longTimeDiff then
+                        s :: f :: rest
+
+                      else
+                        model.chord
+                    , timediff < longTimeDiff
+                    )
+
+                _ ->
+                    ( chordToString model.chord model.chordmap, model.chord, True )
     in
-    { model | show = model.show ++ string, chord = addi }
-
-
-upmodel : Key -> Model -> Model
-upmodel i model =
-    let
-        remi =
-            remove i model.chord
-
-        firsttwo =
-            List.take 2 model.chord
-
-        string =
-            if List.member i firsttwo then
-                chordToString remi model.chordmap
+    { model
+        | show = model.show ++ addstring
+        , lastpress =
+            if changetime then
+                Just updatetime
 
             else
-                chordToString firsttwo model.chordmap
-    in
-    { model | show = model.show ++ string, chord = remi }
+                model.lastpress
+        , chord = changechord
+    }
 
 
 
@@ -207,6 +237,7 @@ type Msg
     = LoadChordMap (Result Http.Error ChordMap)
     | KeyDown Key
     | KeyUp Key
+    | GotTime Time.Posix
     | Clear
     | NoOp
 
@@ -223,10 +254,13 @@ update msg model =
                     ( model, Cmd.none )
 
         KeyDown i ->
-            ( downmodel i model, Cmd.none )
+            ( { model | chord = addkey i model.chord }, Task.perform GotTime Time.now )
 
         KeyUp i ->
-            ( upmodel i model, Cmd.none )
+            ( { model | chord = removekey i model.chord }, Cmd.none )
+
+        GotTime time ->
+            ( addChordVal model time, Cmd.none )
 
         Clear ->
             ( { model | chord = [] }, Cmd.none )
